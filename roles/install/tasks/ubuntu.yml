@@ -1,0 +1,23 @@
+# tasks file for install
+- name: Update repositories
+    apt: update_cache=yes
+
+- name: Install tools
+  apt:
+    name: git gcc build-essential openssh firewalld dhclient connman htop curl wget
+    state: latest
+
+- name: Check if cargo is installed
+  shell: command -v cargo
+  register: cargo_exists
+  ignore_errors: yes
+
+- include_tasks: rustup.yml
+  when: cargo_exists is failed
+  register: rustup_install
+
+# - name: Install rustup via apt
+#   when: rustup_install is failed
+#   apt:
+#     name: rustup
+#     state: latest

@@ -1,0 +1,73 @@
+---
+# tasks file for configure
+- name: Configure system NTP
+  ansible.builtin.include_role:
+    name: geerlingguy.ntp
+  vars:
+    ntp_timezone: America/Denver
+
+- name: Clone git repository for cosmic ray detector program
+  ansible.builtin.git:
+    repo: 'https://github.com/dbchuck/cosmic_ray_detector'
+    dest: "{{ base_path }}"
+    version: latest
+
+- name: Build cosmic ray detector program
+  anisble.builtin.command: RUSTFLAGS="-C target-cpu=native" cargo build --manifest-path {{ base_path }}/Cargo.toml
+
+- name: Copy SystemD service template over for cosmic ray detector program
+  template:
+    src: templates/cosmic-rays-detector.service.j2
+    dest: /lib/systemd/system/cosmic-rays-detector.service
+
+- name: Configure SystemD to auto start the cosmic ray detector program
+  ansible.builtin.systemd:
+    name: cosmic-rays-detector.service
+    state: started
+    enabled: true
+
+- name: Disable bluetooth SystemD service
+  ansible.builtin.systemd:
+    name: bluetooth.service
+    state: stopped
+    enabled: false
+
+- name: Disable wifi and bluetooth modules
+  community.general.kernel_blacklist:
+    name: iwlwifi btusb
+    state: present
+
+- name: Configure firewall
+  include_tasks: firewalld.yml
+
+- name: Change user passwords
+  ansible.builtin.user:
+    name: "{{ item }}"
+    state: present
+    password: "{{ user_passwords | password_hash('sha512') }}"
+  loop:
+    - "root"
+    - "{{ regular_user }}"
+
+- name: Deploy SSH Keys
+  authorized_key: 
+    user: "{{ item }}"
+    key: "{{ lookup('file', pub_ssh_key_path) }}"
+    state: present
+  loop:
+    - "root"
+    - "{{ regular_user }}"
+
+- name: Disable Password Authentication
+  lineinfile:
+    dest: /etc/ssh/sshd_config
+    regexp: '^PasswordAuthentication'
+    line: "PasswordAuthentication no"
+    state: present
+
+# - name: Configure OpenSSH daemon to only listen on a static IP address
+#   lineinfile:
+#     dest: /etc/ssh/sshd_config
+#     regexp: '^ListenAddress'
+#     line: "ListenAddress {{ static_ip }}"
+#     state: present

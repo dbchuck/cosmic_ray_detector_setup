@@ -1,0 +1,17 @@
+---
+- name: 'Install required components'
+  hosts: all
+  gather_facts: true
+  become: true
+  become_user: root
+  roles:
+    - install
+
+- name: 'Configure system'
+  hosts: all
+  gather_facts: true
+  become: true
+  become_user: root
+  roles:
+    - configure
+

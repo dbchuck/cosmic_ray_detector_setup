@@ -1,0 +1,10 @@
+# static_ip: "10.0.0.2"
+base_path: /opt/cosmic-rays-detector
+user_passwords: the_password
+pub_ssh_key_path: "~/.ssh/cosmic-rays.pub"
+regular_user: cosmic
+detector_check_interval: "30000"
+detector_memory: 100MB
+detector_longitude: "10.11"
+detector_latitude: "-11.12"
+detector_file_path: "~/results.txt"
