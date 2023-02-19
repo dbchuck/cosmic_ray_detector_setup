@@ -10,10 +10,12 @@
   ansible.builtin.git:
     repo: 'https://github.com/dbchuck/cosmic_ray_detector'
     dest: "{{ base_path }}"
-    version: latest
+    force: yes
 
 - name: Build cosmic ray detector program
-  anisble.builtin.command: RUSTFLAGS="-C target-cpu=native" cargo build --manifest-path {{ base_path }}/Cargo.toml
+  ansible.builtin.shell: RUSTFLAGS="-C target-cpu=native" cargo build --release --manifest-path {{ base_path }}/Cargo.toml
+  args:
+    executable: /bin/bash
 
 - name: Copy SystemD service template over for cosmic ray detector program
   template:
@@ -31,23 +33,27 @@
     name: bluetooth.service
     state: stopped
     enabled: false
+  ignore_errors: yes
 
 - name: Disable wifi and bluetooth modules
   community.general.kernel_blacklist:
     name: iwlwifi btusb
     state: present
+  ignore_errors: yes
 
 - name: Configure firewall
   include_tasks: firewalld.yml
 
 - name: Change user passwords
   ansible.builtin.user:
-    name: "{{ item }}"
+    name: "{{ item.name }}"
     state: present
-    password: "{{ user_passwords | password_hash('sha512') }}"
+    password: "{{ item.password | password_hash('sha512') }}"
+    shell: "{{ item.shell }}"
+    create_home: "{{ item.create_home }}"
   loop:
-    - "root"
-    - "{{ regular_user }}"
+    - { name: "root", password: "{{ root_password }}", shell: /bin/bash, create_home: false}
+    - { name: "{{ regular_user }}", password: "{{ user_password }}", shell: /bin/bash, create_home: true}
 
 - name: Deploy SSH Keys
   authorized_key: 

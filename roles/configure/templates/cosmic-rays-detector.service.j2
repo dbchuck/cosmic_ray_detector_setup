@@ -1,8 +1,11 @@
 [Unit]
-Description="A Rust powered cosmic ray detector application"
+Description=A Rust powered cosmic ray detector application
 
 [Service]
 Type=simple
 User={{ regular_user }}
-ExecStart={{ base_path }}/target/release/cosmic-rays-detector -d '{{ detector_check_interval }}' -m '{{ detector_memory }}' --longitude '{{ detector_longitude }}' --latitude '{{ detector_latitude }}' --file-path '{{ detector_file_path }}'
+ExecStart={{ base_path }}/target/release/cosmic_ray_detector -d '{{ detector_check_interval }}' -m '{{ detector_memory }}' --parallel --longitude '{{ detector_longitude }}' --latitude '{{ detector_latitude }}' --file-path '{{ detector_file_path }}'
 Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

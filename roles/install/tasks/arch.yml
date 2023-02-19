@@ -1,8 +1,12 @@
 - name: Install required packages
   community.general.pacman:
-    name: git gcc openssh firewalld dhclient connman htop curl wget
+    name: git gcc openssh firewalld dhclient usbutils htop curl wget
     state: latest
     # python-firewall
+  ignore_errors: yes
+  # register: pacman_output
+  # when: '"fail to retrieve package name from pacman output" in pacman_output'
+
 
 - name: Check if cargo is installed
   shell: command -v cargo
